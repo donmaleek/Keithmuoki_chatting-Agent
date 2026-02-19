@@ -20,9 +20,7 @@ import { Server, Socket } from 'socket.io';
     credentials: true
   }
 })
-export class MessagesGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class MessagesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
 
   private readonly logger = new Logger(MessagesGateway.name);

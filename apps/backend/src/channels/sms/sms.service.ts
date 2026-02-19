@@ -20,7 +20,7 @@ export class SmsService {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly aiService: AiService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -42,8 +42,8 @@ export class SmsService {
         content: text,
         sender: 'client',
         channel: 'sms',
-        externalId: id ?? `sms_${Date.now()}`,
-      },
+        externalId: id ?? `sms_${Date.now()}`
+      }
     });
 
     if (result.status === 'duplicate') {
@@ -53,17 +53,14 @@ export class SmsService {
 
     // Generate AI reply
     try {
-      const aiReply = await this.aiService.generateReply(
-        result.conversationId!,
-        text,
-      );
+      const aiReply = await this.aiService.generateReply(result.conversationId!, text);
 
       if (aiReply?.reply) {
         // Save AI reply as a message in the conversation
         await this.messagesService.saveAiReply(
           result.conversationId!,
           aiReply.reply,
-          aiReply.aiRunId,
+          aiReply.aiRunId
         );
         this.logger.log(`SMS AI reply saved: ${aiReply.reply.substring(0, 50)}...`);
 
@@ -84,7 +81,7 @@ export class SmsService {
     const username = this.configService.get<string>('AFRICASTALKING_USERNAME');
 
     if (!apiKey || !username) {
-      this.logger.warn('SMS: Africa\'s Talking credentials not configured');
+      this.logger.warn("SMS: Africa's Talking credentials not configured");
       return;
     }
 

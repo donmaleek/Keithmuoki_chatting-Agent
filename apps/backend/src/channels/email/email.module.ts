@@ -10,6 +10,6 @@ import { AiModule } from '../../ai/ai.module';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [],
-  controllers: [],
+  controllers: []
 })
 export class EmailModule {}

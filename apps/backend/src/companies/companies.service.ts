@@ -3,7 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
-  ForbiddenException,
+  ForbiddenException
 } from '@nestjs/common';
 import { prisma } from '@chat/db';
 
@@ -14,7 +14,10 @@ export class CompaniesService {
     if (!data.name?.trim()) throw new BadRequestException('Company name is required');
     if (!data.slug?.trim()) throw new BadRequestException('Slug is required');
 
-    const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    const slug = data.slug
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-');
     if (slug.length < 3) throw new BadRequestException('Slug must be at least 3 characters');
 
     const existing = await prisma.company.findUnique({ where: { slug } });
@@ -23,7 +26,7 @@ export class CompaniesService {
     const planMap: Record<string, { maxAgents: number; maxConvos: number }> = {
       starter: { maxAgents: 2, maxConvos: 1000 },
       growth: { maxAgents: 10, maxConvos: 10000 },
-      scale: { maxAgents: 100, maxConvos: 100000 },
+      scale: { maxAgents: 100, maxConvos: 100000 }
     };
     const limits = planMap[data.plan || 'starter'] || planMap.starter;
 
@@ -34,13 +37,13 @@ export class CompaniesService {
         plan: (data.plan as any) || 'starter',
         ownerId,
         maxAgents: limits.maxAgents,
-        maxConvos: limits.maxConvos,
-      },
+        maxConvos: limits.maxConvos
+      }
     });
 
     // Auto-add owner as an agent too
     await prisma.companyAgent.create({
-      data: { companyId: company.id, userId: ownerId },
+      data: { companyId: company.id, userId: ownerId }
     });
 
     return company;
@@ -53,7 +56,7 @@ export class CompaniesService {
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
-        { slug: { contains: filters.search, mode: 'insensitive' } },
+        { slug: { contains: filters.search, mode: 'insensitive' } }
       ];
     }
 
@@ -61,9 +64,9 @@ export class CompaniesService {
       where,
       include: {
         owner: { select: { id: true, name: true, email: true } },
-        _count: { select: { agents: true, conversations: true } },
+        _count: { select: { agents: true, conversations: true } }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -75,10 +78,10 @@ export class CompaniesService {
         owner: { select: { id: true, name: true, email: true } },
         agents: {
           include: { user: { select: { id: true, name: true, email: true, role: true } } },
-          where: { isActive: true },
+          where: { isActive: true }
         },
-        _count: { select: { conversations: true, clients: true } },
-      },
+        _count: { select: { conversations: true, clients: true } }
+      }
     });
     if (!company) throw new NotFoundException('Company not found');
     return company;
@@ -88,42 +91,44 @@ export class CompaniesService {
   async joinCompany(companyId: string, userId: string) {
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      include: { _count: { select: { agents: true } } },
+      include: { _count: { select: { agents: true } } }
     });
     if (!company) throw new NotFoundException('Company not found');
-    if (company.status !== 'active') throw new ForbiddenException('This company is not accepting agents');
+    if (company.status !== 'active')
+      throw new ForbiddenException('This company is not accepting agents');
 
     if (company._count.agents >= company.maxAgents) {
       throw new ForbiddenException(`Company has reached its ${company.maxAgents} agent limit`);
     }
 
     const existing = await prisma.companyAgent.findUnique({
-      where: { companyId_userId: { companyId, userId } },
+      where: { companyId_userId: { companyId, userId } }
     });
-    if (existing && existing.isActive) throw new ConflictException('Already a member of this company');
+    if (existing && existing.isActive)
+      throw new ConflictException('Already a member of this company');
 
     if (existing) {
       return prisma.companyAgent.update({
         where: { id: existing.id },
-        data: { isActive: true },
+        data: { isActive: true }
       });
     }
 
     return prisma.companyAgent.create({
-      data: { companyId, userId },
+      data: { companyId, userId }
     });
   }
 
   // ─── Agent leaves a company ─────────────────────────────────────────────────
   async leaveCompany(companyId: string, userId: string) {
     const membership = await prisma.companyAgent.findUnique({
-      where: { companyId_userId: { companyId, userId } },
+      where: { companyId_userId: { companyId, userId } }
     });
     if (!membership) throw new NotFoundException('Not a member of this company');
 
     return prisma.companyAgent.update({
       where: { id: membership.id },
-      data: { isActive: false },
+      data: { isActive: false }
     });
   }
 
@@ -134,18 +139,24 @@ export class CompaniesService {
       include: {
         company: {
           include: {
-            _count: { select: { conversations: true, clients: true, agents: true } },
-          },
-        },
+            _count: { select: { conversations: true, clients: true, agents: true } }
+          }
+        }
       },
-      orderBy: { joinedAt: 'desc' },
+      orderBy: { joinedAt: 'desc' }
     });
   }
 
   // ─── Inbound anchor: receive a message via the company's unique anchor URL ──
   async ingestViaAnchor(
     anchorToken: string,
-    data: { clientName: string; clientEmail?: string; clientPhone?: string; message: string; channel?: string },
+    data: {
+      clientName: string;
+      clientEmail?: string;
+      clientPhone?: string;
+      message: string;
+      channel?: string;
+    }
   ) {
     const company = await prisma.company.findUnique({ where: { anchorToken } });
     if (!company) throw new NotFoundException('Invalid anchor token');
@@ -155,12 +166,12 @@ export class CompaniesService {
     let client = null;
     if (data.clientEmail) {
       client = await prisma.client.findFirst({
-        where: { email: data.clientEmail, companyId: company.id },
+        where: { email: data.clientEmail, companyId: company.id }
       });
     }
     if (!client && data.clientPhone) {
       client = await prisma.client.findFirst({
-        where: { phone: data.clientPhone, companyId: company.id },
+        where: { phone: data.clientPhone, companyId: company.id }
       });
     }
     if (!client) {
@@ -169,8 +180,8 @@ export class CompaniesService {
           name: data.clientName || 'Unknown',
           email: data.clientEmail || null,
           phone: data.clientPhone || null,
-          companyId: company.id,
-        },
+          companyId: company.id
+        }
       });
     }
 
@@ -179,9 +190,9 @@ export class CompaniesService {
       where: {
         clientId: client.id,
         companyId: company.id,
-        status: { in: ['open', 'pending', 'human_takeover'] },
+        status: { in: ['open', 'pending', 'human_takeover'] }
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: 'desc' }
     });
 
     if (!conversation) {
@@ -191,8 +202,8 @@ export class CompaniesService {
           companyId: company.id,
           channel: (data.channel as any) || 'web',
           status: 'open',
-          aiMode: 'auto',
-        },
+          aiMode: 'auto'
+        }
       });
     }
 
@@ -201,15 +212,18 @@ export class CompaniesService {
       data: {
         conversationId: conversation.id,
         sender: 'client',
-        content: data.message,
-      },
+        content: data.message
+      }
     });
 
     return { conversationId: conversation.id, messageId: message.id, clientId: client.id };
   }
 
   // ─── Get conversations for a company (filtered for agent) ───────────────────
-  async getCompanyConversations(companyId: string, filters?: { status?: string; assignedToId?: string }) {
+  async getCompanyConversations(
+    companyId: string,
+    filters?: { status?: string; assignedToId?: string }
+  ) {
     const where: any = { companyId };
     if (filters?.status) where.status = filters.status;
     if (filters?.assignedToId) where.assignedToId = filters.assignedToId;
@@ -220,25 +234,30 @@ export class CompaniesService {
         client: true,
         assignedTo: { select: { id: true, name: true } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
-        _count: { select: { messages: true } },
+        _count: { select: { messages: true } }
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: 'desc' }
     });
   }
 
   // ─── Update company (owner only) ───────────────────────────────────────────
-  async updateCompany(companyId: string, userId: string, data: { name?: string; logo?: string; domain?: string }) {
+  async updateCompany(
+    companyId: string,
+    userId: string,
+    data: { name?: string; logo?: string; domain?: string }
+  ) {
     const company = await prisma.company.findUnique({ where: { id: companyId } });
     if (!company) throw new NotFoundException('Company not found');
-    if (company.ownerId !== userId) throw new ForbiddenException('Only the owner can update company details');
+    if (company.ownerId !== userId)
+      throw new ForbiddenException('Only the owner can update company details');
 
     return prisma.company.update({
       where: { id: companyId },
       data: {
         ...(data.name && { name: data.name.trim() }),
         ...(data.logo && { logo: data.logo }),
-        ...(data.domain !== undefined && { domain: data.domain || null }),
-      },
+        ...(data.domain !== undefined && { domain: data.domain || null })
+      }
     });
   }
 
@@ -246,7 +265,7 @@ export class CompaniesService {
   async getAnchorInfo(slug: string) {
     const company = await prisma.company.findUnique({
       where: { slug },
-      select: { id: true, name: true, slug: true, logo: true, status: true, anchorToken: true },
+      select: { id: true, name: true, slug: true, logo: true, status: true, anchorToken: true }
     });
     if (!company) throw new NotFoundException('Company not found');
     return company;

@@ -4,6 +4,6 @@ import { GrowthService } from './growth.service';
 
 @Module({
   controllers: [GrowthController],
-  providers: [GrowthService],
+  providers: [GrowthService]
 })
 export class GrowthModule {}

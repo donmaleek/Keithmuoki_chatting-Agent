@@ -8,6 +8,6 @@ import { WhatsappController } from './whatsapp.controller';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [WhatsappService],
-  controllers: [WhatsappController],
+  controllers: [WhatsappController]
 })
 export class WhatsappModule {}

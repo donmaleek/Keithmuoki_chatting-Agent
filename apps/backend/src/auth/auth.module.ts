@@ -19,7 +19,7 @@ import { GoogleStrategy } from './google.strategy';
           if (!secret || secret.length < 32 || secret.includes('change-me')) {
             throw new Error(
               'JWT_SECRET must be set to a strong random secret (min 32 chars) in production.\n' +
-              'Generate one with: openssl rand -base64 48'
+                'Generate one with: openssl rand -base64 48'
             );
           }
         }

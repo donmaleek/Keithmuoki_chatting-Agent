@@ -11,7 +11,7 @@ const CreateInquirySchema = z.object({
   monthlyVolume: z.number().int().positive().optional(),
   useCase: z.string().trim().min(10),
   planInterest: z.string().trim().min(2),
-  budgetRange: z.string().trim().optional(),
+  budgetRange: z.string().trim().optional()
 });
 
 @Injectable()
@@ -21,18 +21,18 @@ export class GrowthService {
     if (!parsed.success) {
       throw new BadRequestException({
         message: 'Invalid inquiry payload',
-        errors: parsed.error.flatten(),
+        errors: parsed.error.flatten()
       });
     }
 
     const inquiry = await prisma.serviceInquiry.create({
-      data: parsed.data,
+      data: parsed.data
     });
 
     return {
       id: inquiry.id,
       status: inquiry.status,
-      message: 'Inquiry submitted successfully. Our team will contact you shortly.',
+      message: 'Inquiry submitted successfully. Our team will contact you shortly.'
     };
   }
 
@@ -40,7 +40,7 @@ export class GrowthService {
     return prisma.serviceInquiry.findMany({
       where: status ? { status } : undefined,
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      take: 200
     });
   }
 }

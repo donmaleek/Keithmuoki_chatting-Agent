@@ -1,4 +1,11 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, forwardRef } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  forwardRef
+} from '@nestjs/common';
 import { prisma } from '@chat/db';
 import { z } from 'zod';
 import type { Channel, ConversationStatus, AiMode } from '@chat/shared';
@@ -38,7 +45,7 @@ export class MessagesService {
   constructor(
     private readonly gateway: MessagesGateway,
     @Inject(forwardRef(() => AiService))
-    private readonly aiService: AiService,
+    private readonly aiService: AiService
   ) {}
 
   async ingest(payload: Record<string, unknown>) {
@@ -122,13 +129,10 @@ export class MessagesService {
     this.gateway.emitNewMessage(resolvedConversation.id, createdMessage);
 
     // ─── Auto-reply: if aiMode is 'auto' and message is from client, generate AI reply ──
-    if (
-      message.sender === 'client' &&
-      resolvedConversation.aiMode === 'auto'
-    ) {
+    if (message.sender === 'client' && resolvedConversation.aiMode === 'auto') {
       // Fire-and-forget so we don't block the ingest response
       this.triggerAutoReply(resolvedConversation.id, message.content).catch((err) =>
-        this.logger.error(`Auto-reply failed for conversation ${resolvedConversation.id}`, err),
+        this.logger.error(`Auto-reply failed for conversation ${resolvedConversation.id}`, err)
       );
     }
 
@@ -247,14 +251,14 @@ export class MessagesService {
         ...(params.status ? { status: params.status as ConversationStatus } : {}),
         ...(params.clientId ? { clientId: params.clientId } : {}),
         ...(params.assignedToId ? { assignedToId: params.assignedToId } : {}),
-        ...(params.unassigned === 'true' ? { assignedToId: null } : {}),
+        ...(params.unassigned === 'true' ? { assignedToId: null } : {})
       },
       orderBy: { updatedAt: 'desc' },
       skip,
       take,
       include: {
         client: true,
-        assignedTo: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     });
   }
@@ -264,7 +268,7 @@ export class MessagesService {
       where: { id },
       include: {
         client: true,
-        assignedTo: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     });
     if (!conversation) throw new NotFoundException('Conversation not found');
@@ -290,9 +294,7 @@ export class MessagesService {
       prisma.message.count({ where: { sender: 'agent' } })
     ]);
 
-    const messagesByChannelRaw = await prisma.$queryRaw<
-      { channel: string; count: bigint }[]
-    >`
+    const messagesByChannelRaw = await prisma.$queryRaw<{ channel: string; count: bigint }[]>`
       SELECT c.channel, COUNT(m.id) as count
       FROM "Conversation" c
       LEFT JOIN "Message" m ON m."conversationId" = c.id
@@ -301,11 +303,17 @@ export class MessagesService {
     `;
 
     const conversationsByStatus = Object.fromEntries(
-      conversationGroups.map((r: { status: string; _count: { id: number } }) => [r.status, r._count.id])
+      conversationGroups.map((r: { status: string; _count: { id: number } }) => [
+        r.status,
+        r._count.id
+      ])
     ) as Record<ConversationStatus, number>;
 
     const messagesByChannel = Object.fromEntries(
-      messagesByChannelRaw.map((r: { channel: string; count: bigint }) => [r.channel, Number(r.count)])
+      messagesByChannelRaw.map((r: { channel: string; count: bigint }) => [
+        r.channel,
+        Number(r.count)
+      ])
     ) as Record<Channel, number>;
 
     const total = aiMessages + agentMessages;

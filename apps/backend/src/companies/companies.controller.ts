@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { CompaniesService } from './companies.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,7 +12,7 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard)
   createCompany(
     @Req() req: Request & { user: { userId: string } },
-    @Body() body: { name: string; slug: string; plan?: string },
+    @Body() body: { name: string; slug: string; plan?: string }
   ) {
     return this.companiesService.createCompany(req.user.userId, body);
   }
@@ -54,7 +44,7 @@ export class CompaniesController {
   updateCompany(
     @Param('id') id: string,
     @Req() req: Request & { user: { userId: string } },
-    @Body() body: { name?: string; logo?: string; domain?: string },
+    @Body() body: { name?: string; logo?: string; domain?: string }
   ) {
     return this.companiesService.updateCompany(id, req.user.userId, body);
   }
@@ -62,20 +52,14 @@ export class CompaniesController {
   // ─── Agent joins a company ─────────────────────────────────────────────────
   @Post(':id/join')
   @UseGuards(JwtAuthGuard)
-  joinCompany(
-    @Param('id') id: string,
-    @Req() req: Request & { user: { userId: string } },
-  ) {
+  joinCompany(@Param('id') id: string, @Req() req: Request & { user: { userId: string } }) {
     return this.companiesService.joinCompany(id, req.user.userId);
   }
 
   // ─── Agent leaves a company ────────────────────────────────────────────────
   @Post(':id/leave')
   @UseGuards(JwtAuthGuard)
-  leaveCompany(
-    @Param('id') id: string,
-    @Req() req: Request & { user: { userId: string } },
-  ) {
+  leaveCompany(@Param('id') id: string, @Req() req: Request & { user: { userId: string } }) {
     return this.companiesService.leaveCompany(id, req.user.userId);
   }
 
@@ -84,7 +68,7 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard)
   getCompanyConversations(
     @Param('id') id: string,
-    @Query() query: { status?: string; assignedToId?: string },
+    @Query() query: { status?: string; assignedToId?: string }
   ) {
     return this.companiesService.getCompanyConversations(id, query);
   }
@@ -99,7 +83,14 @@ export class CompaniesController {
   @Post('anchor/:token/ingest')
   ingestViaAnchor(
     @Param('token') token: string,
-    @Body() body: { clientName: string; clientEmail?: string; clientPhone?: string; message: string; channel?: string },
+    @Body()
+    body: {
+      clientName: string;
+      clientEmail?: string;
+      clientPhone?: string;
+      message: string;
+      channel?: string;
+    }
   ) {
     return this.companiesService.ingestViaAnchor(token, body);
   }

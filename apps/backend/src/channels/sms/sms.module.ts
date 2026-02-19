@@ -8,6 +8,6 @@ import { SmsController } from './sms.controller';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [SmsService],
-  controllers: [SmsController],
+  controllers: [SmsController]
 })
 export class SmsModule {}

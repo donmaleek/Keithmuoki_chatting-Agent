@@ -8,7 +8,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly config: ConfigService) {
     const clientID = config.get<string>('GOOGLE_CLIENT_ID');
     const clientSecret = config.get<string>('GOOGLE_CLIENT_SECRET');
-    const callbackURL = config.get<string>('GOOGLE_CALLBACK_URL') || 
+    const callbackURL =
+      config.get<string>('GOOGLE_CALLBACK_URL') ||
       `${config.get<string>('NEXT_PUBLIC_BACKEND_URL') || 'http://localhost:3001'}/auth/google/callback`;
 
     if (!clientID || !clientSecret) {
@@ -22,7 +23,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientID: clientID || 'not-configured',
       clientSecret: clientSecret || 'not-configured',
       callbackURL,
-      scope: ['email', 'profile'],
+      scope: ['email', 'profile']
     });
   }
 
@@ -30,7 +31,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     accessToken: string,
     refreshToken: string,
     profile: Profile,
-    done: VerifyCallback,
+    done: VerifyCallback
   ): Promise<void> {
     const { id, name, emails, photos } = profile;
 
@@ -41,8 +42,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const user = {
       googleId: id,
       email: emails[0].value,
-      name: name ? `${name.givenName || ''} ${name.familyName || ''}`.trim() : emails[0].value.split('@')[0],
-      picture: photos?.[0]?.value || null,
+      name: name
+        ? `${name.givenName || ''} ${name.familyName || ''}`.trim()
+        : emails[0].value.split('@')[0],
+      picture: photos?.[0]?.value || null
     };
 
     done(null, user);

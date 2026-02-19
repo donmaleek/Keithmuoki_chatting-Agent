@@ -8,6 +8,6 @@ import { FacebookController } from './facebook.controller';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [FacebookService],
-  controllers: [FacebookController],
+  controllers: [FacebookController]
 })
 export class FacebookModule {}

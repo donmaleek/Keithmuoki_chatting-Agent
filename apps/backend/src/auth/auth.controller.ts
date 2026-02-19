@@ -103,11 +103,7 @@ export class AuthController {
     @Req() req: Request & { user: { userId: string } },
     @Body() body: { currentPassword: string; newPassword: string }
   ) {
-    return this.authService.changePassword(
-      req.user.userId,
-      body.currentPassword,
-      body.newPassword
-    );
+    return this.authService.changePassword(req.user.userId, body.currentPassword, body.newPassword);
   }
 
   // ─── Google OAuth ─────────────────────────────────────────────────────────────
@@ -142,8 +138,8 @@ export class AuthController {
   @Get('google/status')
   googleStatus() {
     const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
-    return { 
-      enabled: !!(clientId && clientId !== 'not-configured'),
+    return {
+      enabled: !!(clientId && clientId !== 'not-configured')
     };
   }
 }

@@ -8,7 +8,7 @@ import { MessagesService } from './messages.service';
 @Module({
   imports: [
     AuthModule, // provides JwtModule (and JwtService) for the gateway auth
-    forwardRef(() => AiModule), // AiService needed for auto-reply on ingest
+    forwardRef(() => AiModule) // AiService needed for auto-reply on ingest
   ],
   controllers: [MessagesController],
   providers: [MessagesGateway, MessagesService],

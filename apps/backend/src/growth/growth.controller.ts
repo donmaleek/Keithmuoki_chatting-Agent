@@ -20,7 +20,7 @@ export class GrowthController {
       useCase: string;
       planInterest: string;
       budgetRange?: string;
-    },
+    }
   ) {
     return this.growthService.createInquiry(body);
   }

@@ -7,13 +7,6 @@ import { SmsModule } from './sms/sms.module';
 import { EmailModule } from './email/email.module';
 
 @Module({
-  imports: [
-    WhatsappModule,
-    InstagramModule,
-    FacebookModule,
-    TelegramModule,
-    SmsModule,
-    EmailModule,
-  ],
+  imports: [WhatsappModule, InstagramModule, FacebookModule, TelegramModule, SmsModule, EmailModule]
 })
 export class ChannelRouterModule {}

@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import axios from 'axios';
@@ -16,7 +12,7 @@ export class InstagramService {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly aiService: AiService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -26,8 +22,7 @@ export class InstagramService {
   verifySignature(rawBody: Buffer, signature: string): void {
     const META_APP_SECRET = this.configService.get<string>('META_APP_SECRET') ?? '';
     const expected =
-      'sha256=' +
-      crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
+      'sha256=' + crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
 
     if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature ?? ''))) {
       throw new ForbiddenException('Invalid Instagram webhook signature');
@@ -68,8 +63,8 @@ export class InstagramService {
         content: messageText,
         sender: 'client',
         channel: 'instagram',
-        externalId: mid,
-      },
+        externalId: mid
+      }
     });
 
     if (result.status === 'duplicate') {
@@ -84,12 +79,12 @@ export class InstagramService {
         if (aiResult?.reply) {
           await Promise.all([
             this.send(senderId, aiResult.reply),
-            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId),
+            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId)
           ]);
         }
       } catch (err) {
         this.logger.warn(
-          `Instagram: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`,
+          `Instagram: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`
         );
       }
     }
@@ -106,18 +101,18 @@ export class InstagramService {
         'https://graph.facebook.com/v18.0/me/messages',
         {
           recipient: { id: recipientId },
-          message: { text: content },
+          message: { text: content }
         },
         {
           headers: {
             Authorization: `Bearer ${INSTAGRAM_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-        },
+            'Content-Type': 'application/json'
+          }
+        }
       );
     } catch (err) {
       this.logger.warn(
-        `Instagram: failed to send message to ${recipientId}: ${(err as Error).message}`,
+        `Instagram: failed to send message to ${recipientId}: ${(err as Error).message}`
       );
     }
   }

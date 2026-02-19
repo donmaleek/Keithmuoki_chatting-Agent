@@ -65,7 +65,12 @@ describe('MessagesService', () => {
       };
 
       const mockClient = { id: 'client_1', name: 'John Doe' };
-      const mockConversation = { id: 'conv_1', clientId: 'client_1', channel: 'whatsapp', aiMode: 'auto' };
+      const mockConversation = {
+        id: 'conv_1',
+        clientId: 'client_1',
+        channel: 'whatsapp',
+        aiMode: 'auto'
+      };
       const mockMessage = { id: 'msg_1', content: 'Hello!' };
 
       (prisma.message.findUnique as jest.Mock).mockResolvedValue(null);

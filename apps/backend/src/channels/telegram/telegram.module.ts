@@ -8,6 +8,6 @@ import { TelegramController } from './telegram.controller';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [TelegramService],
-  controllers: [TelegramController],
+  controllers: [TelegramController]
 })
 export class TelegramModule {}

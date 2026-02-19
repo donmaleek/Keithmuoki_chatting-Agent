@@ -70,7 +70,10 @@ export default function InboxPage() {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (!storedToken) localStorage.setItem('token', 'demo-token');
+    if (!storedToken) {
+      window.location.replace('/login');
+      return;
+    }
     apiClient
       .get<{ id: string; role: string }>('/auth/me')
       .then((u) => {
@@ -78,12 +81,15 @@ export default function InboxPage() {
         setUserId(u.id);
         if (u.role === 'agent') setFilter('mine');
       })
-      .catch(() => {});
+      .catch(() => {
+        localStorage.removeItem('token');
+        window.location.replace('/login');
+      });
   }, []);
 
   const fetchConversationDetail = useCallback(async (convId: string) => {
     try {
-      const token = localStorage.getItem('token') || 'demo';
+      const token = localStorage.getItem('token') || '';
       const res = await fetch(`${BACKEND_URL}/messages/conversations/${convId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

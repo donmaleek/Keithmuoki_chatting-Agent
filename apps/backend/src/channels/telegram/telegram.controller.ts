@@ -5,7 +5,7 @@ import {
   Body,
   ForbiddenException,
   HttpCode,
-  Logger,
+  Logger
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TelegramService } from './telegram.service';
@@ -16,7 +16,7 @@ export class TelegramController {
 
   constructor(
     private readonly telegramService: TelegramService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -27,7 +27,7 @@ export class TelegramController {
   @HttpCode(200)
   async receiveMessage(
     @Query('secret') secret: string,
-    @Body() body: Record<string, any>,
+    @Body() body: Record<string, any>
   ): Promise<{ status: string }> {
     const TELEGRAM_WEBHOOK_SECRET = this.configService.get<string>('TELEGRAM_WEBHOOK_SECRET');
 

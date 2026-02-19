@@ -3,7 +3,7 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
-  ConflictException,
+  ConflictException
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { prisma } from '@chat/db';
@@ -27,15 +27,17 @@ export class TeamService {
         updatedAt: true,
         _count: {
           select: {
-            assignedConversations: { where: { status: { in: ['open', 'pending', 'human_takeover'] } } },
-          },
-        },
-      },
+            assignedConversations: {
+              where: { status: { in: ['open', 'pending', 'human_takeover'] } }
+            }
+          }
+        }
+      }
     });
     return agents.map((a) => ({
       ...a,
       activeConversations: a._count.assignedConversations,
-      _count: undefined,
+      _count: undefined
     }));
   }
 
@@ -49,14 +51,19 @@ export class TeamService {
         role: true,
         isActive: true,
         createdAt: true,
-        updatedAt: true,
-      },
+        updatedAt: true
+      }
     });
     if (!agent) throw new NotFoundException('Agent not found');
     return agent;
   }
 
-  async createAgent(data: { email: string; name: string; password: string; role?: 'admin' | 'agent' }) {
+  async createAgent(data: {
+    email: string;
+    name: string;
+    password: string;
+    role?: 'admin' | 'agent';
+  }) {
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) throw new ConflictException('Email already in use');
 
@@ -66,16 +73,19 @@ export class TeamService {
         email: data.email,
         name: data.name,
         passwordHash,
-        role: data.role ?? 'agent',
+        role: data.role ?? 'agent'
       },
-      select: { id: true, email: true, name: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, isActive: true, createdAt: true }
     });
 
     this.logger.log(`Agent created: ${agent.email} (${agent.role})`);
     return agent;
   }
 
-  async updateAgent(id: string, data: { name?: string; email?: string; role?: 'admin' | 'agent'; isActive?: boolean }) {
+  async updateAgent(
+    id: string,
+    data: { name?: string; email?: string; role?: 'admin' | 'agent'; isActive?: boolean }
+  ) {
     const agent = await prisma.user.findUnique({ where: { id } });
     if (!agent) throw new NotFoundException('Agent not found');
 
@@ -90,9 +100,9 @@ export class TeamService {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.email !== undefined && { email: data.email }),
         ...(data.role !== undefined && { role: data.role }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.isActive !== undefined && { isActive: data.isActive })
       },
-      select: { id: true, email: true, name: true, role: true, isActive: true, updatedAt: true },
+      select: { id: true, email: true, name: true, role: true, isActive: true, updatedAt: true }
     });
 
     this.logger.log(`Agent updated: ${updated.email}`);
@@ -124,19 +134,19 @@ export class TeamService {
     // Close previous assignment if any
     await prisma.conversationAssignment.updateMany({
       where: { conversationId, unassignedAt: null },
-      data: { unassignedAt: new Date() },
+      data: { unassignedAt: new Date() }
     });
 
     // Create new assignment
     await prisma.conversationAssignment.create({
-      data: { conversationId, userId: agentId },
+      data: { conversationId, userId: agentId }
     });
 
     // Update conversation's assignedToId
     const updated = await prisma.conversation.update({
       where: { id: conversationId },
       data: { assignedToId: agentId, status: 'human_takeover' },
-      include: { client: true, assignedTo: { select: { id: true, name: true, email: true } } },
+      include: { client: true, assignedTo: { select: { id: true, name: true, email: true } } }
     });
 
     await prisma.auditLog.create({
@@ -145,8 +155,8 @@ export class TeamService {
         action: 'conversation.assigned',
         resourceType: 'Conversation',
         resourceId: conversationId,
-        details: JSON.parse(JSON.stringify({ agentId, agentName: agent.name })),
-      },
+        details: JSON.parse(JSON.stringify({ agentId, agentName: agent.name }))
+      }
     });
 
     this.logger.log(`Conversation ${conversationId} assigned to ${agent.name}`);
@@ -156,13 +166,13 @@ export class TeamService {
   async unassignConversation(conversationId: string, unassignedBy: string) {
     await prisma.conversationAssignment.updateMany({
       where: { conversationId, unassignedAt: null },
-      data: { unassignedAt: new Date() },
+      data: { unassignedAt: new Date() }
     });
 
     const updated = await prisma.conversation.update({
       where: { id: conversationId },
       data: { assignedToId: null, aiMode: 'auto' },
-      include: { client: true },
+      include: { client: true }
     });
 
     this.logger.log(`Conversation ${conversationId} unassigned by ${unassignedBy}`);
@@ -177,18 +187,18 @@ export class TeamService {
 
     const agent = await prisma.user.findUnique({
       where: { id: agentId },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true }
     });
     if (!agent) throw new NotFoundException('Agent not found');
 
     // Conversations handled (assigned to this agent in period)
     const assignmentsInPeriod = await prisma.conversationAssignment.count({
-      where: { userId: agentId, assignedAt: { gte: since } },
+      where: { userId: agentId, assignedAt: { gte: since } }
     });
 
     // Currently active conversations
     const activeConversations = await prisma.conversation.count({
-      where: { assignedToId: agentId, status: { in: ['open', 'pending', 'human_takeover'] } },
+      where: { assignedToId: agentId, status: { in: ['open', 'pending', 'human_takeover'] } }
     });
 
     // Messages sent by this agent in period
@@ -196,8 +206,8 @@ export class TeamService {
       where: {
         sender: 'agent',
         createdAt: { gte: since },
-        conversation: { assignedToId: agentId },
-      },
+        conversation: { assignedToId: agentId }
+      }
     });
 
     // Closed conversations in period
@@ -205,17 +215,16 @@ export class TeamService {
       where: {
         assignedToId: agentId,
         status: 'closed',
-        updatedAt: { gte: since },
-      },
+        updatedAt: { gte: since }
+      }
     });
 
     // Average response time (time between client message and next agent message)
     const avgResponseMs = await this.calculateAvgResponseTime(agentId, since);
 
     // Customer satisfaction proxy — closed conversations / total assignments
-    const resolutionRate = assignmentsInPeriod > 0
-      ? Math.round((closedConversations / assignmentsInPeriod) * 100)
-      : 0;
+    const resolutionRate =
+      assignmentsInPeriod > 0 ? Math.round((closedConversations / assignmentsInPeriod) * 100) : 0;
 
     // Bonus calculation: $2 per closed conversation + $0.50 per message sent
     const bonusFromClosed = closedConversations * 2.0;
@@ -232,14 +241,14 @@ export class TeamService {
         messagesSent,
         avgResponseTimeMs: avgResponseMs,
         avgResponseTimeFormatted: avgResponseMs ? this.formatDuration(avgResponseMs) : 'N/A',
-        resolutionRate,
+        resolutionRate
       },
       bonus: {
         fromClosedConversations: bonusFromClosed,
         fromMessagesSent: bonusFromMessages,
         total: totalBonus,
-        currency: 'USD',
-      },
+        currency: 'USD'
+      }
     };
   }
 
@@ -247,18 +256,21 @@ export class TeamService {
     const agents = await prisma.user.findMany({
       where: { isActive: true },
       select: { id: true, name: true, email: true, role: true },
-      orderBy: { name: 'asc' },
+      orderBy: { name: 'asc' }
     });
 
     const performances = await Promise.all(
-      agents.map((agent) => this.getAgentPerformance(agent.id, periodDays)),
+      agents.map((agent) => this.getAgentPerformance(agent.id, periodDays))
     );
 
     // Sort by total bonus descending for leaderboard
     performances.sort((a, b) => b.bonus.total - a.bonus.total);
 
     // Team aggregates
-    const totalConversationsHandled = performances.reduce((s, p) => s + p.metrics.conversationsHandled, 0);
+    const totalConversationsHandled = performances.reduce(
+      (s, p) => s + p.metrics.conversationsHandled,
+      0
+    );
     const totalClosed = performances.reduce((s, p) => s + p.metrics.closedConversations, 0);
     const totalMessages = performances.reduce((s, p) => s + p.metrics.messagesSent, 0);
     const totalBonuses = performances.reduce((s, p) => s + p.bonus.total, 0);
@@ -270,9 +282,9 @@ export class TeamService {
         totalConversationsHandled,
         totalClosed,
         totalMessages,
-        totalBonuses: Math.round(totalBonuses * 100) / 100,
+        totalBonuses: Math.round(totalBonuses * 100) / 100
       },
-      leaderboard: performances,
+      leaderboard: performances
     };
   }
 
@@ -280,7 +292,7 @@ export class TeamService {
     return prisma.conversationAssignment.findMany({
       where: { conversationId },
       orderBy: { assignedAt: 'desc' },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, name: true, email: true } } }
     });
   }
 

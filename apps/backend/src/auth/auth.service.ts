@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -118,15 +123,18 @@ export class AuthService {
     return this.toPublicUser(user);
   }
 
-  async updateProfile(userId: string, data: { name?: string; email?: string; aiSystemPrompt?: string; pushToken?: string }) {
+  async updateProfile(
+    userId: string,
+    data: { name?: string; email?: string; aiSystemPrompt?: string; pushToken?: string }
+  ) {
     const normalizedEmail = data.email?.trim().toLowerCase();
 
     if (normalizedEmail) {
       const existing = await prisma.user.findFirst({
         where: {
           email: normalizedEmail,
-          id: { not: userId },
-        },
+          id: { not: userId }
+        }
       });
       if (existing) {
         throw new ConflictException('Email is already in use');
@@ -165,7 +173,7 @@ export class AuthService {
       if (!secret || secret.length < 32) {
         throw new Error(
           'JWT_REFRESH_SECRET must be set to a strong random secret (min 32 chars) in production.\n' +
-          'Generate one with: openssl rand -base64 48'
+            'Generate one with: openssl rand -base64 48'
         );
       }
     }
@@ -175,7 +183,12 @@ export class AuthService {
   /**
    * Login or create user from Google OAuth
    */
-  async loginOrCreateFromGoogle(profile: { googleId: string; email: string; name: string; picture?: string | null }) {
+  async loginOrCreateFromGoogle(profile: {
+    googleId: string;
+    email: string;
+    name: string;
+    picture?: string | null;
+  }) {
     // Check if user exists by email
     let user = await prisma.user.findUnique({ where: { email: profile.email.toLowerCase() } });
 

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Query,
-  Body,
-  Headers,
-  Res,
-  HttpCode,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Headers, Res, HttpCode, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { InstagramService } from './instagram.service';
@@ -19,7 +9,7 @@ export class InstagramController {
 
   constructor(
     private readonly instagramService: InstagramService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -31,7 +21,7 @@ export class InstagramController {
     @Query('hub.mode') mode: string,
     @Query('hub.verify_token') verifyToken: string,
     @Query('hub.challenge') challenge: string,
-    @Res() res: Response,
+    @Res() res: Response
   ): void {
     const META_VERIFY_TOKEN = this.configService.get<string>('META_VERIFY_TOKEN');
 
@@ -52,7 +42,7 @@ export class InstagramController {
   @HttpCode(200)
   async receiveMessage(
     @Body() body: Buffer,
-    @Headers('x-hub-signature-256') signature: string,
+    @Headers('x-hub-signature-256') signature: string
   ): Promise<{ status: string }> {
     await this.instagramService.handleInbound(body, signature);
     return { status: 'ok' };

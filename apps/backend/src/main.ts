@@ -19,18 +19,36 @@ async function bootstrap() {
   // Global: 200 reqs per minute per IP
   app.use(rateLimit({ windowMs: 60_000, max: 200, standardHeaders: true, legacyHeaders: false }));
   // Auth endpoints: stricter — 10 attempts per 15 min
-  app.use('/auth', rateLimit({ windowMs: 15 * 60_000, max: 10, message: { error: 'Too many auth attempts. Try again in 15 minutes.' } }));
+  app.use(
+    '/auth',
+    rateLimit({
+      windowMs: 15 * 60_000,
+      max: 10,
+      message: { error: 'Too many auth attempts. Try again in 15 minutes.' }
+    })
+  );
   // Public chat ingest: 30 messages per minute per IP
   app.use('/companies/anchor', rateLimit({ windowMs: 60_000, max: 30 }));
 
   const frontendUrl = config.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
-  const corsOrigins = [frontendUrl];
-  // In development, also allow localhost variants
-  if (process.env.NODE_ENV !== 'production') {
-    corsOrigins.push('http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002');
-  }
+  const allowedOrigins = new Set([
+    frontendUrl,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+    'http://localhost:3005'
+  ]);
   app.enableCors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, mobile apps, same-origin)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      // Allow any localhost port in all environments
+      if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
   });

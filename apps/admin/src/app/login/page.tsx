@@ -54,9 +54,9 @@ function LoginForm() {
         throw new Error(data.message || 'Invalid email or password');
       }
 
-      const data = (await response.json()) as { accessToken: string; user: { name: string } };
+      const data = (await response.json()) as { accessToken: string; user: { name: string; role: string } };
       localStorage.setItem('token', data.accessToken);
-      router.push('/inbox');
+      router.push(data.user?.role === 'admin' ? '/dashboard' : '/inbox');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
@@ -206,6 +206,18 @@ export default function LoginPage() {
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/40 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
 
       <div className="w-full max-w-sm relative z-10">
+        {/* Back to home */}
+        <div className="mb-4 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors group"
+          >
+            <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to home
+          </Link>
+        </div>
         <Suspense fallback={<LoginFormFallback />}>
           <LoginForm />
         </Suspense>

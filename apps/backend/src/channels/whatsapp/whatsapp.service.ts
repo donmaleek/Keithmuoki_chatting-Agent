@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import axios from 'axios';
@@ -16,7 +12,7 @@ export class WhatsappService {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly aiService: AiService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -26,8 +22,7 @@ export class WhatsappService {
   verifySignature(rawBody: Buffer, signature: string): void {
     const META_APP_SECRET = this.configService.get<string>('META_APP_SECRET') ?? '';
     const expected =
-      'sha256=' +
-      crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
+      'sha256=' + crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
 
     if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature ?? ''))) {
       throw new ForbiddenException('Invalid WhatsApp webhook signature');
@@ -70,8 +65,8 @@ export class WhatsappService {
         content: textBody,
         sender: 'client',
         channel: 'whatsapp',
-        externalId: messageId,
-      },
+        externalId: messageId
+      }
     });
 
     if (result.status === 'duplicate') {
@@ -86,12 +81,12 @@ export class WhatsappService {
         if (aiResult?.reply) {
           await Promise.all([
             this.send(from, aiResult.reply),
-            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId),
+            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId)
           ]);
         }
       } catch (err) {
         this.logger.warn(
-          `WhatsApp: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`,
+          `WhatsApp: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`
         );
       }
     }
@@ -111,14 +106,14 @@ export class WhatsappService {
           messaging_product: 'whatsapp',
           to,
           type: 'text',
-          text: { body: content },
+          text: { body: content }
         },
         {
           headers: {
             Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-        },
+            'Content-Type': 'application/json'
+          }
+        }
       );
     } catch (err) {
       this.logger.warn(`WhatsApp: failed to send message to ${to}: ${(err as Error).message}`);

@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, Logger } from '@nestjs/common';
 import { SmsService } from './sms.service';
 
 interface AfricasTalkingInboundBody {
@@ -30,9 +24,7 @@ export class SmsController {
    */
   @Post('inbound')
   @HttpCode(200)
-  async receiveMessage(
-    @Body() body: AfricasTalkingInboundBody,
-  ): Promise<{ status: string }> {
+  async receiveMessage(@Body() body: AfricasTalkingInboundBody): Promise<{ status: string }> {
     await this.smsService.handleInbound(body);
     return { status: 'ok' };
   }

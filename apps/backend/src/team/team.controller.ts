@@ -8,7 +8,7 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 import { Request } from 'express';
 import { TeamService } from './team.service';
@@ -37,7 +37,7 @@ export class TeamController {
   @Post('agents')
   @Roles('admin')
   createAgent(
-    @Body() body: { email: string; name: string; password: string; role?: 'admin' | 'agent' },
+    @Body() body: { email: string; name: string; password: string; role?: 'admin' | 'agent' }
   ) {
     return this.teamService.createAgent(body);
   }
@@ -46,17 +46,14 @@ export class TeamController {
   @Roles('admin')
   updateAgent(
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; role?: 'admin' | 'agent'; isActive?: boolean },
+    @Body() body: { name?: string; email?: string; role?: 'admin' | 'agent'; isActive?: boolean }
   ) {
     return this.teamService.updateAgent(id, body);
   }
 
   @Patch('agents/:id/password')
   @Roles('admin')
-  resetPassword(
-    @Param('id') id: string,
-    @Body() body: { password: string },
-  ) {
+  resetPassword(@Param('id') id: string, @Body() body: { password: string }) {
     return this.teamService.resetAgentPassword(id, body.password);
   }
 
@@ -67,7 +64,7 @@ export class TeamController {
   assignConversation(
     @Param('id') conversationId: string,
     @Body() body: { agentId: string },
-    @Req() req: Request & { user: { userId: string } },
+    @Req() req: Request & { user: { userId: string } }
   ) {
     return this.teamService.assignConversation(conversationId, body.agentId, req.user.userId);
   }
@@ -76,7 +73,7 @@ export class TeamController {
   @Roles('admin')
   unassignConversation(
     @Param('id') conversationId: string,
-    @Req() req: Request & { user: { userId: string } },
+    @Req() req: Request & { user: { userId: string } }
   ) {
     return this.teamService.unassignConversation(conversationId, req.user.userId);
   }
@@ -96,10 +93,7 @@ export class TeamController {
 
   @Get('performance/:id')
   @Roles('admin')
-  getAgentPerformance(
-    @Param('id') agentId: string,
-    @Query('days') days?: string,
-  ) {
+  getAgentPerformance(@Param('id') agentId: string, @Query('days') days?: string) {
     return this.teamService.getAgentPerformance(agentId, days ? parseInt(days, 10) : 30);
   }
 }

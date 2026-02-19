@@ -23,7 +23,14 @@ export class MessagesController {
     @Query('skip') skip?: string,
     @Query('take') take?: string
   ) {
-    return this.messagesService.listConversations({ status, clientId, assignedToId, unassigned, skip, take });
+    return this.messagesService.listConversations({
+      status,
+      clientId,
+      assignedToId,
+      unassigned,
+      skip,
+      take
+    });
   }
 
   @Get('conversations/:id')
@@ -45,10 +52,7 @@ export class MessagesController {
   /** Human takeover: change status or aiMode for a conversation */
   @Patch('conversations/:id')
   @UseGuards(JwtAuthGuard)
-  patchConversation(
-    @Param('id') id: string,
-    @Body() body: { status?: string; aiMode?: string }
-  ) {
+  patchConversation(@Param('id') id: string, @Body() body: { status?: string; aiMode?: string }) {
     return this.messagesService.patchConversation(id, body as any);
   }
 

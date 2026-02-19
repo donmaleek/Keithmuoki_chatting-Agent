@@ -6,6 +6,6 @@ import { AdminInsightsService } from './admin-insights.service';
 @Module({
   imports: [TeamModule],
   controllers: [AdminInsightsController],
-  providers: [AdminInsightsService],
+  providers: [AdminInsightsService]
 })
 export class AdminInsightsModule {}

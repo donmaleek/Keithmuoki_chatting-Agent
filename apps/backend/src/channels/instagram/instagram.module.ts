@@ -8,6 +8,6 @@ import { InstagramController } from './instagram.controller';
 @Module({
   imports: [MessagesModule, AiModule, ConfigModule],
   providers: [InstagramService],
-  controllers: [InstagramController],
+  controllers: [InstagramController]
 })
 export class InstagramModule {}

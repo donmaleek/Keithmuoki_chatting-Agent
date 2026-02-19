@@ -11,7 +11,7 @@ export class TelegramService implements OnModuleInit {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly aiService: AiService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -24,7 +24,7 @@ export class TelegramService implements OnModuleInit {
 
     if (!TELEGRAM_BOT_TOKEN || !BACKEND_PUBLIC_URL || !TELEGRAM_WEBHOOK_SECRET) {
       this.logger.warn(
-        'Telegram: missing TELEGRAM_BOT_TOKEN, BACKEND_PUBLIC_URL, or TELEGRAM_WEBHOOK_SECRET — skipping webhook registration',
+        'Telegram: missing TELEGRAM_BOT_TOKEN, BACKEND_PUBLIC_URL, or TELEGRAM_WEBHOOK_SECRET — skipping webhook registration'
       );
       return;
     }
@@ -35,13 +35,11 @@ export class TelegramService implements OnModuleInit {
       await axios.post(
         `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
         { url: webhookUrl },
-        { headers: { 'Content-Type': 'application/json' } },
+        { headers: { 'Content-Type': 'application/json' } }
       );
       this.logger.log(`Telegram webhook registered: ${webhookUrl}`);
     } catch (err) {
-      this.logger.warn(
-        `Telegram: failed to register webhook: ${(err as Error).message}`,
-      );
+      this.logger.warn(`Telegram: failed to register webhook: ${(err as Error).message}`);
     }
   }
 
@@ -71,8 +69,8 @@ export class TelegramService implements OnModuleInit {
         content: text,
         sender: 'client',
         channel: 'telegram',
-        externalId: String(messageId),
-      },
+        externalId: String(messageId)
+      }
     });
 
     if (result.status === 'duplicate') {
@@ -87,12 +85,12 @@ export class TelegramService implements OnModuleInit {
         if (aiResult?.reply) {
           await Promise.all([
             this.send(chatId, aiResult.reply),
-            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId),
+            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId)
           ]);
         }
       } catch (err) {
         this.logger.warn(
-          `Telegram: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`,
+          `Telegram: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`
         );
       }
     }
@@ -108,11 +106,11 @@ export class TelegramService implements OnModuleInit {
       await axios.post(
         `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
         { chat_id: chatId, text: content },
-        { headers: { 'Content-Type': 'application/json' } },
+        { headers: { 'Content-Type': 'application/json' } }
       );
     } catch (err) {
       this.logger.warn(
-        `Telegram: failed to send message to chatId ${chatId}: ${(err as Error).message}`,
+        `Telegram: failed to send message to chatId ${chatId}: ${(err as Error).message}`
       );
     }
   }

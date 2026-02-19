@@ -43,9 +43,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 relative overflow-hidden">
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[32rem] h-[32rem] rounded-full bg-indigo-600/25 blur-3xl" />
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-violet-500/20 blur-3xl" />
+
+      {/* Back to home */}
+      <div className="w-full max-w-md relative z-10 mb-3 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors group"
+        >
+          <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to home
+        </Link>
+      </div>
 
       <div className="w-full max-w-md relative z-10 bg-white/95 rounded-3xl p-8 shadow-2xl border border-white/60 ring-1 ring-indigo-200/50">
         <div className="mb-6 text-center">

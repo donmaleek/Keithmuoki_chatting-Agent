@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import axios from 'axios';
@@ -16,7 +12,7 @@ export class FacebookService {
   constructor(
     private readonly messagesService: MessagesService,
     private readonly aiService: AiService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -26,8 +22,7 @@ export class FacebookService {
   verifySignature(rawBody: Buffer, signature: string): void {
     const META_APP_SECRET = this.configService.get<string>('META_APP_SECRET') ?? '';
     const expected =
-      'sha256=' +
-      crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
+      'sha256=' + crypto.createHmac('sha256', META_APP_SECRET).update(rawBody).digest('hex');
 
     if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature ?? ''))) {
       throw new ForbiddenException('Invalid Facebook webhook signature');
@@ -68,8 +63,8 @@ export class FacebookService {
         content: messageText,
         sender: 'client',
         channel: 'facebook',
-        externalId: mid,
-      },
+        externalId: mid
+      }
     });
 
     if (result.status === 'duplicate') {
@@ -84,12 +79,12 @@ export class FacebookService {
         if (aiResult?.reply) {
           await Promise.all([
             this.send(senderId, aiResult.reply),
-            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId),
+            this.messagesService.saveAiReply(conversationId, aiResult.reply, aiResult.aiRunId)
           ]);
         }
       } catch (err) {
         this.logger.warn(
-          `Facebook: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`,
+          `Facebook: AI reply failed for conversation ${conversationId}: ${(err as Error).message}`
         );
       }
     }
@@ -99,24 +94,22 @@ export class FacebookService {
    * Send a Facebook Messenger message via the Graph API.
    */
   async send(recipientId: string, content: string): Promise<void> {
-    const FACEBOOK_PAGE_ACCESS_TOKEN = this.configService.get<string>(
-      'FACEBOOK_PAGE_ACCESS_TOKEN',
-    );
+    const FACEBOOK_PAGE_ACCESS_TOKEN = this.configService.get<string>('FACEBOOK_PAGE_ACCESS_TOKEN');
 
     try {
       await axios.post(
         `https://graph.facebook.com/v18.0/me/messages?access_token=${FACEBOOK_PAGE_ACCESS_TOKEN}`,
         {
           recipient: { id: recipientId },
-          message: { text: content },
+          message: { text: content }
         },
         {
-          headers: { 'Content-Type': 'application/json' },
-        },
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     } catch (err) {
       this.logger.warn(
-        `Facebook: failed to send message to ${recipientId}: ${(err as Error).message}`,
+        `Facebook: failed to send message to ${recipientId}: ${(err as Error).message}`
       );
     }
   }

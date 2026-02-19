@@ -5,7 +5,7 @@ import { prisma } from '@chat/db';
 import { z } from 'zod';
 
 // GPT-4o pricing (as of 2024) — update if pricing changes
-const COST_PER_INPUT_TOKEN = 5 / 1_000_000;   // $5 per 1M input tokens
+const COST_PER_INPUT_TOKEN = 5 / 1_000_000; // $5 per 1M input tokens
 const COST_PER_OUTPUT_TOKEN = 15 / 1_000_000; // $15 per 1M output tokens
 
 const VALID_MODES = ['auto', 'draft', 'manual'] as const;
@@ -118,7 +118,7 @@ export class AiService {
 
     const reply = completion.choices[0]?.message?.content ?? '';
     const usage = completion.usage;
-    const tokensUsed = (usage?.total_tokens) ?? 0;
+    const tokensUsed = usage?.total_tokens ?? 0;
     const costUsd =
       (usage?.prompt_tokens ?? 0) * COST_PER_INPUT_TOKEN +
       (usage?.completion_tokens ?? 0) * COST_PER_OUTPUT_TOKEN;

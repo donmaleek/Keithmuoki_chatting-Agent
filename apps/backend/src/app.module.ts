@@ -27,7 +27,7 @@ import { CompaniesModule } from './companies/companies.module';
     TeamModule,
     GrowthModule,
     AdminInsightsModule,
-    CompaniesModule,
+    CompaniesModule
   ]
 })
 export class AppModule {}
