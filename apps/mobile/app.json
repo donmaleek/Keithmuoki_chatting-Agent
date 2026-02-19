@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Chatting Agent",
+    "slug": "chatting-agent",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"]
+  }
+}

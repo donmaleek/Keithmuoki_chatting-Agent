@@ -1,0 +1,68 @@
+{
+  "name": "ai-respond",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ai-respond",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 260]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.BACKEND_URL}}/ai/respond",
+        "jsonParameters": true,
+        "bodyParametersJson": "={{$json}}"
+      },
+      "id": "2",
+      "name": "AI Respond",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 260]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "3",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 260]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Respond": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "ai-respond"
+}

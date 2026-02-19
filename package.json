@@ -1,0 +1,26 @@
+{
+  "name": "chatting-agent",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run start:dev -w apps/backend",
+    "dev:admin": "npm run dev -w apps/admin",
+    "dev:all": "concurrently -n backend,admin \"npm run dev:backend\" \"npm run dev:admin\"",
+    "lint": "npm run lint -ws",
+    "format": "prettier . --check"
+  },
+  "overrides": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.5.4"
+  }
+}

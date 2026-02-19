@@ -1,0 +1,68 @@
+{
+  "name": "paystack-webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "paystack-webhook",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 320]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$env.BACKEND_URL}}/payments/webhook/paystack",
+        "jsonParameters": true,
+        "bodyParametersJson": "={{$json}}"
+      },
+      "id": "2",
+      "name": "Paystack Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 320]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "3",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [720, 320]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Paystack Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paystack Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "paystack-webhook"
+}

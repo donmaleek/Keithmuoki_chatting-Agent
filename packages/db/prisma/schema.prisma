@@ -1,0 +1,295 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Channel {
+  whatsapp
+  instagram
+  facebook
+  sms
+  telegram
+  email
+  web
+}
+
+enum ConversationStatus {
+  open
+  pending
+  human_takeover
+  closed
+}
+
+enum AiMode {
+  auto
+  draft
+  manual
+}
+
+enum UserRole {
+  admin
+  agent
+}
+
+enum InquiryStatus {
+  new
+  contacted
+  qualified
+  won
+  lost
+}
+
+enum CompanyPlan {
+  starter
+  growth
+  scale
+}
+
+enum CompanyStatus {
+  active
+  suspended
+  cancelled
+}
+
+// ─── Companies (SaaS tenants who buy a plan) ─────────────────────────────────
+
+model Company {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique // URL-safe anchor: messages sent to /c/<slug>
+  domain      String?       // Optional custom domain
+  logo        String?       // URL to company logo
+  plan        CompanyPlan   @default(starter)
+  status      CompanyStatus @default(active)
+  ownerId     String        // The user who created/owns this company
+  anchorToken String        @unique @default(cuid()) // Secret token for inbound webhook
+  maxAgents   Int           @default(2)
+  maxConvos   Int           @default(1000) // Monthly conversation limit
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner         User              @relation("OwnedCompanies", fields: [ownerId], references: [id])
+  agents        CompanyAgent[]
+  conversations Conversation[]
+  clients       Client[]
+
+  @@index([slug])
+  @@index([anchorToken])
+}
+
+// ─── Company ↔ Agent join (agents pick companies to work on) ──────────────────
+
+model CompanyAgent {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String
+  joinedAt  DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([companyId, userId])
+  @@index([userId])
+}
+
+// ─── Internal Users (admins / agents who manage the inbox) ────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  googleId       String?   @unique  // Google OAuth ID
+  name           String
+  role           UserRole  @default(agent)
+  isActive       Boolean   @default(true)        // Admin can deactivate agents
+  aiSystemPrompt String?   // Owner writes their persona/voice/rules here — fed to GPT-4o as the system prompt
+  salesContext   String?   // Product catalog, pricing, selling points — injected into every AI reply
+  pushToken      String?   // Expo push notification device token
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  assignments           ConversationAssignment[]
+  assignedConversations Conversation[]           @relation("AssignedAgent")
+  ownedCompanies        Company[]                @relation("OwnedCompanies")
+  companyAgents         CompanyAgent[]
+}
+
+// ─── Clients (external customers who send messages) ───────────────────────────
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  tags      String[]
+  companyId String?  // Which company this client belongs to (null = legacy/global)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company        Company?       @relation(fields: [companyId], references: [id])
+  conversations  Conversation[]
+  paymentIntents PaymentIntent[]
+
+  @@index([companyId])
+}
+
+// ─── Conversations ────────────────────────────────────────────────────────────
+
+model Conversation {
+  id           String             @id @default(cuid())
+  clientId     String
+  channel      Channel
+  status       ConversationStatus @default(open)
+  aiMode       AiMode             @default(auto)
+  assignedToId String?            // Current agent assigned to this conversation
+  companyId    String?            // Which company this conversation belongs to
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  client      Client                   @relation(fields: [clientId], references: [id])
+  assignedTo  User?                    @relation("AssignedAgent", fields: [assignedToId], references: [id])
+  company     Company?                 @relation(fields: [companyId], references: [id])
+  messages    Message[]
+  aiRuns      AIRun[]
+  assignments ConversationAssignment[]
+
+  @@index([companyId])
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  sender         String   // 'client' | 'agent' | 'ai'
+  content        String
+  externalId     String?  @unique // channel-native message ID for deduplication (e.g. WhatsApp message ID)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  messageTags  MessageTag[]
+  aiRun        AIRun?
+}
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  messageTags MessageTag[]
+}
+
+model MessageTag {
+  messageId String
+  tagId     String
+
+  message Message @relation(fields: [messageId], references: [id])
+  tag     Tag     @relation(fields: [tagId], references: [id])
+
+  @@id([messageId, tagId])
+}
+
+// ─── AI Runs (log every GPT-4o call for cost tracking) ───────────────────────
+
+model AIRun {
+  id             String   @id @default(cuid())
+  conversationId String
+  messageId      String?  @unique // null when mode=draft (reply not persisted)
+  prompt         String   // JSON stringified OpenAI messages array
+  completion     String
+  tokensUsed     Int
+  model          String
+  costUsd        Float
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  message      Message?     @relation(fields: [messageId], references: [id])
+}
+
+// ─── Webhook Events (idempotency — prevents duplicate processing) ──────────────
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String   // 'whatsapp' | 'instagram' | 'facebook' | 'telegram' | 'sms' | 'email' | 'paystack'
+  externalId  String   @unique // channel-native event ID; unique index prevents reprocessing
+  payload     Json
+  processedAt DateTime @default(now())
+}
+
+// ─── Conversation Assignments (human agent takes over) ────────────────────────
+
+// ─── Conversation Assignments (history of who handled each chat) ──────────────
+
+model ConversationAssignment {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  assignedAt     DateTime  @default(now())
+  unassignedAt   DateTime? // null = currently assigned
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([conversationId])
+}
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+
+model PaymentIntent {
+  id         String   @id @default(cuid())
+  clientId   String
+  provider   String   // 'paystack'
+  amount     Int      // in smallest currency unit (kobo for NGN)
+  currency   String
+  status     String   // 'pending' | 'paid' | 'failed' | 'abandoned'
+  externalId String?  @unique // Paystack transaction reference
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id])
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actor        String   // userId or 'system'
+  action       String   // e.g. 'conversation.status_changed', 'payment.webhook_received'
+  resourceType String?  // e.g. 'Conversation', 'PaymentIntent'
+  resourceId   String?
+  details      Json?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+}
+
+// ─── Commercial Inquiries (SaaS leads) ───────────────────────────────────────
+
+model ServiceInquiry {
+  id             String        @id @default(cuid())
+  fullName       String
+  email          String
+  companyName    String
+  phone          String?
+  teamSize       Int?
+  monthlyVolume  Int?
+  useCase        String
+  planInterest   String
+  budgetRange    String?
+  status         InquiryStatus @default(new)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
